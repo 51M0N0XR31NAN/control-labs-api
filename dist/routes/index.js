@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const loan_routes_1 = __importDefault(require("./loan.routes"));
+const user_routes_1 = __importDefault(require("./user.routes"));
+const room_routes_1 = __importDefault(require("./room.routes"));
+const equipment_routes_1 = __importDefault(require("./equipment.routes"));
+const incident_routes_1 = __importDefault(require("./incident.routes"));
+const dashboard_routes_1 = __importDefault(require("./dashboard.routes"));
+const router = (0, express_1.Router)();
+router.use('/loans', loan_routes_1.default);
+router.use('/users', user_routes_1.default);
+router.use('/rooms', room_routes_1.default);
+router.use('/equipment', equipment_routes_1.default);
+router.use('/incidents', incident_routes_1.default);
+router.use('/dashboard', dashboard_routes_1.default);
+exports.default = router;

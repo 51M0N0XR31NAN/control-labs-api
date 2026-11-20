@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const incident_controller_1 = require("../controllers/incident.controller");
+const validateIncident_middleware_1 = require("../middlewares/validateIncident.middleware");
+const router = (0, express_1.Router)();
+router.post('/', validateIncident_middleware_1.validateCreateIncidentPayload, incident_controller_1.IncidentController.createIncident);
+router.get('/', incident_controller_1.IncidentController.getIncidents);
+router.patch('/:id', validateIncident_middleware_1.validateUpdateIncidentPayload, incident_controller_1.IncidentController.updateIncidentPartially);
+exports.default = router;

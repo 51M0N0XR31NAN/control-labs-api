@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const equipment_controller_1 = require("../controllers/equipment.controller");
+const validateEquipment_middleware_1 = require("../middlewares/validateEquipment.middleware");
+const router = (0, express_1.Router)();
+router.post('/', validateEquipment_middleware_1.validateCreateEquipmentPayload, equipment_controller_1.EquipmentController.createEquipment);
+router.get('/', equipment_controller_1.EquipmentController.getEquipment);
+router.patch('/:id', validateEquipment_middleware_1.validateUpdateEquipmentPayload, equipment_controller_1.EquipmentController.updateEquipmentPartially);
+exports.default = router;

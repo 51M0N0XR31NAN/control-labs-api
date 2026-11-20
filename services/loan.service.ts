@@ -1,37 +1,88 @@
-import { AcceptLoanResult, CreateLoanRequest, Loan, LoanFilter } from '../models/loan.model';
-
-const loans: Loan[] = [];
-let nextId = 801;
+import { ICreateLoanDTO } from '../src/dtos/loan.dto';
+import { DomainError } from '../src/errors/domain.error';
+import {
+  Loan,
+  LoanFilters,
+  LoanRepository
+} from '../src/repositories/loan.repository';
 
 export class LoanService {
-  public static async createLoan(data: CreateLoanRequest): Promise<Loan> {
-    const loan: Loan = { id: nextId++, ...data, status: 'PENDING', createdAt: new Date() };
-    loans.push(loan);
+  constructor(private readonly loanRepository: LoanRepository) {}
+
+  public async createLoan(input: ICreateLoanDTO): Promise<Loan> {
+    if (!Number.isInteger(input.numeroPc) || input.numeroPc <= 0) {
+      throw new DomainError(
+        'VALIDATION_ERROR',
+        'El número de PCs debe ser un entero positivo.'
+      );
+    }
+
+    return this.loanRepository.create({
+      roomId: input.roomId.toLowerCase(),
+      instructorId: input.instructorId.toLowerCase(),
+      guardaId: input.guardaId.toLowerCase(),
+      numeroPc: input.numeroPc
+    });
+  }
+
+  public async getLoans(filters: LoanFilters = {}): Promise<Loan[]> {
+    if (filters.roomId !== undefined && !this.isUuid(filters.roomId)) {
+      throw new DomainError(
+        'VALIDATION_ERROR',
+        'El filtro roomId debe ser un UUID válido.'
+      );
+    }
+    return this.loanRepository.findAll({
+      roomId: filters.roomId?.toLowerCase()
+    });
+  }
+
+  public async getLoanDetail(id: number): Promise<Loan> {
+    this.validateId(id);
+    const loan = await this.loanRepository.findById(id);
+    if (!loan) {
+      throw new DomainError(
+        'NOT_FOUND',
+        `No existe un préstamo con identificador ${id}.`
+      );
+    }
     return loan;
   }
 
-  public static async getLoansByFilter(filter: LoanFilter): Promise<Loan[]> {
-    const room = filter.room?.toLowerCase();
+  public async acceptLoan(id: number): Promise<Loan> {
+    this.validateId(id);
+    const updatedLoan = await this.loanRepository.updateStatus(
+      id,
+      'PENDIENTE_APROBACION',
+      'APROBADO_Y_FIRMADO'
+    );
+    if (updatedLoan) {
+      return updatedLoan;
+    }
 
-    return loans.filter(
-      (loan) =>
-        (!room || loan.aula.toLowerCase().includes(room)) &&
-        (!filter.startDate || loan.createdAt >= filter.startDate) &&
-        (!filter.endDate || loan.createdAt <= filter.endDate),
+    const currentLoan = await this.loanRepository.findById(id);
+    if (!currentLoan) {
+      throw new DomainError(
+        'NOT_FOUND',
+        `No existe un préstamo con identificador ${id}.`
+      );
+    }
+    throw new DomainError(
+      'CONFLICT',
+      'El préstamo ya fue aceptado y no puede aceptarse nuevamente.'
     );
   }
 
-  public static async getLoanById(id: number): Promise<Loan | undefined> {
-    return loans.find((loan) => loan.id === id);
+  private validateId(id: number): void {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new DomainError(
+        'VALIDATION_ERROR',
+        'El identificador del préstamo debe ser un entero positivo.'
+      );
+    }
   }
 
-  public static async acceptLoan(id: number): Promise<AcceptLoanResult> {
-    const loan = loans.find((l) => l.id === id);
-
-    if (!loan) return { result: 'NOT_FOUND' };
-    if (loan.status === 'ACCEPTED') return { result: 'ALREADY_ACCEPTED' };
-
-    loan.status = 'ACCEPTED';
-    return { result: 'ACCEPTED', loan };
+  private isUuid(value: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
   }
 }
