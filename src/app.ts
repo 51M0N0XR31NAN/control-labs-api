@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import routes from '../routes';
-import { requestLogger } from '../middlewares/logger.middleware';
-import loanRoutes from '../routes/loan.routes';
-import { globalErrorHandler } from '../middlewares/errorHandle.middleware';
+import routes from './routes';
+import { requestLogger } from './middlewares/logger.middleware';
+import { globalErrorHandler } from './middlewares/errorHandle.middleware';
 
 const app = express();
 
@@ -11,7 +10,6 @@ app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
 
-app.use('/api/v1/loans', loanRoutes);
 app.use('/api/v1', routes);
 
 // Health Check Endpoint
